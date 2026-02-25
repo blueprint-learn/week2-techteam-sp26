@@ -31,6 +31,12 @@ def update_user():
     pass
 
 
+@app.get("/user")
+def get_all_users_prefix(prefix: str):
+    # TODO: return all users from the database that match the given name prefix
+    pass
+
+
 @app.delete("/user")
 def delete_user():
     # TODO: delete an existing user from the database

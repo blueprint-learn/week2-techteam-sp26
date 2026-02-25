@@ -1,41 +1,48 @@
 import sys
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
-# app/main.py imports `model` as a top-level module, so include `app/` on sys.path.
 sys.path.append(str(Path(__file__).resolve().parents[1] / "app"))
 
 from app.main import app, db_products, db_users
 
-client = TestClient(app)
 
-
-def setup_function():
+@pytest.fixture(autouse=True)
+def reset_state():
+    db_users.clear()
+    db_products.clear()
+    yield
     db_users.clear()
     db_products.clear()
 
 
-def test_root():
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+
+def test_root(client):
     response = client.get("/")
     assert response.status_code == 200
     assert response.json() == {"message": "Hello World"}
 
 
-def test_read_users_empty():
+def test_read_users_empty(client):
     response = client.get("/users")
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_create_user():
+def test_create_user(client):
     payload = {"_id": 1, "name": "Alice", "email": "alice@example.com"}
     response = client.post("/user", json=payload)
     assert response.status_code == 201
     assert response.json() == payload
 
 
-def test_read_users_after_create():
+def test_read_users_after_create(client):
     payload = {"_id": 1, "name": "Alice", "email": "alice@example.com"}
     client.post("/user", json=payload)
 
@@ -44,7 +51,7 @@ def test_read_users_after_create():
     assert response.json() == [payload]
 
 
-def test_update_user():
+def test_update_user(client):
     original = {"_id": 1, "name": "Alice", "email": "alice@example.com"}
     updated = {"_id": 1, "name": "Alice Smith", "email": "alice.smith@example.com"}
     client.post("/user", json=original)
@@ -54,14 +61,14 @@ def test_update_user():
     assert response.json() == updated
 
 
-def test_update_user_not_found():
+def test_update_user_not_found(client):
     payload = {"_id": 999, "name": "Ghost", "email": "ghost@example.com"}
     response = client.put("/user", json=payload)
     assert response.status_code == 404
     assert response.json() == {"detail": "User not found"}
 
 
-def test_delete_user():
+def test_delete_user(client):
     payload = {"_id": 1, "name": "Alice", "email": "alice@example.com"}
     client.post("/user", json=payload)
 
@@ -73,26 +80,26 @@ def test_delete_user():
     assert users_response.json() == []
 
 
-def test_delete_user_not_found():
+def test_delete_user_not_found(client):
     response = client.delete("/user", params={"_id": 999})
     assert response.status_code == 404
     assert response.json() == {"detail": "User not found"}
 
 
-def test_read_products_empty():
+def test_read_products_empty(client):
     response = client.get("/products")
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_create_product():
+def test_create_product(client):
     payload = {"_id": 10, "name": "Keyboard", "price": 89.99}
     response = client.post("/product", json=payload)
     assert response.status_code == 201
     assert response.json() == payload
 
 
-def test_read_products_after_create():
+def test_read_products_after_create(client):
     payload = {"_id": 10, "name": "Keyboard", "price": 89.99}
     client.post("/product", json=payload)
 
@@ -101,7 +108,7 @@ def test_read_products_after_create():
     assert response.json() == [payload]
 
 
-def test_update_product():
+def test_update_product(client):
     original = {"_id": 10, "name": "Keyboard", "price": 89.99}
     updated = {"_id": 10, "name": "Mechanical Keyboard", "price": 119.99}
     client.post("/product", json=original)
@@ -111,14 +118,14 @@ def test_update_product():
     assert response.json() == updated
 
 
-def test_update_product_not_found():
+def test_update_product_not_found(client):
     payload = {"_id": 777, "name": "Missing", "price": 1.0}
     response = client.put("/product", json=payload)
     assert response.status_code == 404
     assert response.json() == {"detail": "Product not found"}
 
 
-def test_delete_product():
+def test_delete_product(client):
     payload = {"_id": 10, "name": "Keyboard", "price": 89.99}
     client.post("/product", json=payload)
 
@@ -130,7 +137,7 @@ def test_delete_product():
     assert products_response.json() == []
 
 
-def test_delete_product_not_found():
+def test_delete_product_not_found(client):
     response = client.delete("/product", params={"_id": 999})
     assert response.status_code == 404
     assert response.json() == {"detail": "Product not found"}

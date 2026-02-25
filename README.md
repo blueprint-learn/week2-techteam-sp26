@@ -20,7 +20,9 @@ This project exposes an in-memory CRUD API for users and products.
   - Body: `{"_id": int, "name": str, "email": str}`
   - Response `200`: updated user object.
   - Response `404`: `{"detail": "User not found"}` when `_id` does not exist.
-- `DELETE /user?_id=<int>`
+- `GET /user?prefix=`
+  - Response `200`: list of user objects that match prefix on the name.
+- `DELETE /user/{id}`
   - Response `200`: `{"message": "User deleted"}`
   - Response `404`: `{"detail": "User not found"}` when `_id` does not exist.
 
@@ -35,7 +37,7 @@ This project exposes an in-memory CRUD API for users and products.
   - Body: `{"_id": int, "name": str, "price": float}`
   - Response `200`: updated product object.
   - Response `404`: `{"detail": "Product not found"}` when `_id` does not exist.
-- `DELETE /product?_id=<int>`
+- `DELETE /product/{id}`
   - Response `200`: `{"message": "Product deleted"}`
   - Response `404`: `{"detail": "Product not found"}` when `_id` does not exist.
 
